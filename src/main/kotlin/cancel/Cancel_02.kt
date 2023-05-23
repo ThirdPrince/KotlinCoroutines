@@ -21,19 +21,8 @@ import kotlin.coroutines.resumeWithException
 /**
  * 协程的取消
  */
-fun main() = runBlocking{
+fun main() = runBlocking {
 
-
-//    getUserByOkHttp(object :Callback2<GithubUser>{
-//        override fun success(value: GithubUser) {
-//            log(value.toString())
-//        }
-//
-//        override fun onError(t: Throwable) {
-//
-//        }
-//
-//    })
 
     val job = launch {
         log(1)
@@ -48,34 +37,19 @@ fun main() = runBlocking{
 
 
 }
- fun getUserByOkHttp(callback: Callback2<GithubUser>){
-    val call = OkHttpClient().newCall(Request.Builder().get().url("https://api.github.com/users/bennyhuo").build())
-    call.enqueue(object :okhttp3.Callback{
-        override fun onFailure(call: Call, e: IOException) {
-            callback.onError(e)
-        }
 
-        override fun onResponse(call: Call, response: Response) {
-           response.body()?.let {
-               try {
-                   callback.success(GithubUser.from(it.string()))
-               }catch (e:Exception){
-                  e.printStackTrace()
-               }
-           }
-        }
 
-    })
-}
 
-suspend fun getUserCoroutine() = suspendCancellableCoroutine<GithubUser>{
-    continuation ->
+/**
+ * 挂起
+ */
+suspend fun getUserCoroutine() = suspendCancellableCoroutine<GithubUser> { continuation ->
     val call = OkHttpClient().newCall(Request.Builder().get().url("https://api.github.com/users/bennyhuo").build())
     continuation.invokeOnCancellation { // ①
         log("invokeOnCancellation: cancel the request.")
         call.cancel()
     }
-    call.enqueue(object :okhttp3.Callback{
+    call.enqueue(object : okhttp3.Callback {
         override fun onFailure(call: Call, e: IOException) {
             continuation.resumeWithException(e)
         }
@@ -84,11 +58,11 @@ suspend fun getUserCoroutine() = suspendCancellableCoroutine<GithubUser>{
             response.body()?.let {
                 try {
                     continuation.resume(GithubUser.from(it.string()))
-                }catch (e:Exception){
+                } catch (e: Exception) {
                     e.printStackTrace()
                     continuation.resumeWithException(e)
                 }
-            }?:continuation.resumeWithException(NullPointerException())
+            } ?: continuation.resumeWithException(NullPointerException())
         }
 
     })
@@ -97,13 +71,36 @@ suspend fun getUserCoroutine() = suspendCancellableCoroutine<GithubUser>{
 /**
  * GitUser
  */
-data class GithubUser(val login:String){
-    companion object{
-        fun from( str:String):GithubUser{
+data class GithubUser(val login: String) {
+    companion object {
+        fun from(str: String): GithubUser {
             val jsonParser = JsonParser().parse(str).asJsonObject
-            val login =   jsonParser.get("login").asString
+            val login = jsonParser.get("login").asString
             return GithubUser(login)
 
         }
     }
+}
+
+/**
+ * 正常回调
+ */
+fun getUserByOkHttp(callback: Callback2<GithubUser>) {
+    val call = OkHttpClient().newCall(Request.Builder().get().url("https://api.github.com/users/bennyhuo").build())
+    call.enqueue(object : okhttp3.Callback {
+        override fun onFailure(call: Call, e: IOException) {
+            callback.onError(e)
+        }
+
+        override fun onResponse(call: Call, response: Response) {
+            response.body()?.let {
+                try {
+                    callback.success(GithubUser.from(it.string()))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
+    })
 }

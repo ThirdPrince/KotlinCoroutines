@@ -16,5 +16,5 @@ fun fib1(){
             next = tmp
         }
     }
-  fibonacci.take(5).forEach(::log)
+  //fibonacci.take(5).forEach(::log)
 }
