@@ -35,6 +35,17 @@ fun main() = runBlocking {
     job.cancel()
     log(4)
 
+   getUserByOkHttp(object :Callback2<GithubUser>{
+       override fun success(value: GithubUser) {
+
+       }
+
+       override fun onError(t: Throwable) {
+
+       }
+
+   })
+
 
 }
 
